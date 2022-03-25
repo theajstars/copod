@@ -1,0 +1,12 @@
+.statistics-container {
+  align-items: center;
+  padding: 50px 0px;
+}
+.statistics-select {
+  width: 600px;
+  justify-content: space-between;
+}
+.country-select-image {
+  height: 22px;
+  margin-right: 4px;
+}
