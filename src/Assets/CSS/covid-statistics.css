@@ -2,6 +2,27 @@
   align-items: center;
   padding: 50px 0px;
 }
+.stats-row {
+  justify-content: space-between;
+  width: 600px;
+  padding: 30px 5px;
+}
+.stat-item {
+}
+.stat-figure {
+  font-family: "Jost", sans-serif;
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 49px;
+  letter-spacing: -0.2px;
+  color: #1a4dcf;
+}
+.stat-name {
+  font-family: "Jost", sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  color: #000000;
+}
 .statistics-select {
   width: 600px;
   justify-content: space-between;
