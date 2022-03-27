@@ -15,10 +15,23 @@ const globePrefix = <img src={Globe} className="country-select-image" />;
 export default function CovidStatistics() {
   const [countries, setCountries] = useState([]);
   const [region, setRegion] = useState("everywhere");
-  const [timespan, setTimespan] = useState("");
+  var d = new Date();
+  var year = d.getFullYear();
+  var month = d.getMonth() + 1;
+  var date = d.getDate() - 1;
+  const currentDateString = `${year}-${month < 10 ? `0${month}` : `${month}`}-${
+    date < 10 ? `0${date}` : `${date}`
+  }`;
+  // Set the default timespan to the currentDateString
+  const [timespan, setTimespan] = useState(currentDateString);
   const [dataType, setDataType] = useState("");
+  const [activeCases, setActiveCases] = useState(0);
+  const [newCases, setNewCases] = useState(0);
+  const [deaths, setDeaths] = useState(0);
 
   useEffect(() => {
+    document.title = "COPOD - COVID Tracker";
+    console.log("The current Date:", timespan);
     axios
       .get(
         `https://cdn.jsdelivr.net/npm/country-flag-emoji-json@2.0.0/dist/index.json`
@@ -37,7 +50,7 @@ export default function CovidStatistics() {
         method: "GET",
         url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
         params: {
-          // date: timespan,
+          date: timespan,
         },
         headers: {
           "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
@@ -66,6 +79,10 @@ export default function CovidStatistics() {
       .request(options)
       .then((response) => {
         console.log(response.data);
+        const data = response.data.data;
+        setActiveCases(data.active);
+        setNewCases(data.active_diff);
+        setDeaths(data.deaths);
       })
       .catch((err) => {
         console.error(err);
@@ -78,15 +95,15 @@ export default function CovidStatistics() {
         <div className="statistics-container flex-column">
           <div className="flex-row stats-row">
             <div className="stat-item">
-              <div className="stat-figure">45,000</div>
+              <div className="stat-figure">{activeCases.toLocaleString()}</div>
               <small className="stat-name">Active Cases</small>
             </div>
             <div className="stat-item">
-              <div className="stat-figure">45,000</div>
+              <div className="stat-figure">{newCases.toLocaleString()}</div>
               <small className="stat-name">New Cases</small>
             </div>
             <div className="stat-item">
-              <div className="stat-figure">45,000</div>
+              <div className="stat-figure">{deaths.toLocaleString()}</div>
               <small className="stat-name">Total Deaths</small>
             </div>
           </div>
@@ -107,12 +124,12 @@ export default function CovidStatistics() {
               onChange={handleChange}
             >
               <Option value="everywhere">{globePrefix} Everywhere</Option>
-              {countries.map((country) => {
+              {countries.map((country, countryIndex) => {
                 const countryPrefix = (
                   <img src={country.image} className="country-select-image" />
                 );
                 return (
-                  <Option value={country.code}>
+                  <Option value={country.code} key={`meow${countryIndex}`}>
                     {countryPrefix}
                     {country.name}
                   </Option>
