@@ -6,6 +6,7 @@ import { Container } from "@mui/material";
 const { Option } = Select;
 import Globe from "../Assets/IMG/world-globe.png";
 import TestChart from "./TestChart";
+import { Chart, LineAdvance } from "bizcharts";
 
 function handleRegionChange(optionValue) {
   console.log("Value changed to: ", optionValue);
@@ -19,7 +20,12 @@ export default function CovidStatistics() {
   const [countries, setCountries] = useState([]);
   const [region, setRegion] = useState("everywhere");
   const [graphData, setGraphData] = useState([]);
+  const [graphAxis, setGraphAxis] = useState("");
 
+  const [dataType, setDataType] = useState("new-cases");
+  const [activeCases, setActiveCases] = useState(0);
+  const [newCases, setNewCases] = useState(0);
+  const [deaths, setDeaths] = useState(0);
   useEffect(() => {
     console.log("The graph data: ", graphData);
   }, [graphData]);
@@ -75,10 +81,32 @@ export default function CovidStatistics() {
           axios.request(options).then((response) => {
             const dateData = response.data.data;
             console.log(dateData);
+            var d = new Date(dateData.date);
+            var date = d.getDate();
+            var month = d.getMonth() + 1;
+            dateData.date = `${date}/${month < 10 ? `0${month}` : month}`;
             //Push data into graph array for plotting
             setGraphData((oldData) => [...oldData, dateData]);
           });
+          setGraphData(
+            graphData.sort(function (a, b) {
+              return new Date(b.last_update) - new Date(a.last_update);
+            })
+          );
         });
+        console.log(graphData);
+        var y = "";
+        switch (dataType) {
+          case "new-cases":
+            y = "confirmed_diff";
+            break;
+          case "deaths":
+            y = "deaths";
+            break;
+          case "total-cases":
+            y = "confirmed";
+        }
+        setGraphAxis(`date*${y}`);
         break;
       default:
         console.log("Default value");
@@ -93,10 +121,6 @@ export default function CovidStatistics() {
   }`;
   // Set the default timespan to the currentDateString
   const [timespan, setTimespan] = useState(currentDateString);
-  const [dataType, setDataType] = useState("");
-  const [activeCases, setActiveCases] = useState(0);
-  const [newCases, setNewCases] = useState(0);
-  const [deaths, setDeaths] = useState(0);
 
   useEffect(() => {
     document.title = "COPOD - COVID Tracker";
@@ -219,6 +243,15 @@ export default function CovidStatistics() {
           </div>
         </div>
         <TestChart />
+        <Chart padding={[10, 20, 50, 40]} autoFit height={300} data={graphData}>
+          <LineAdvance
+            shape="smooth"
+            point
+            area
+            position="month*temperature"
+            color="city"
+          />
+        </Chart>
       </Container>
     </>
   );
