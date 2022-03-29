@@ -85,6 +85,7 @@ export default function CovidStatistics() {
             var date = d.getDate();
             var month = d.getMonth() + 1;
             dateData.date = `${date}/${month < 10 ? `0${month}` : month}`;
+            dateData.abbrVal = Math.floor(dateData.confirmed / 1000000);
             //Push data into graph array for plotting
             setGraphData((oldData) => [...oldData, dateData]);
           });
@@ -123,6 +124,7 @@ export default function CovidStatistics() {
   const [timespan, setTimespan] = useState(currentDateString);
 
   useEffect(() => {
+    //Get countries and flags on page load
     document.title = "COPOD - COVID Tracker";
     console.log("The current Date:", timespan);
     axios
@@ -135,7 +137,7 @@ export default function CovidStatistics() {
   }, []);
 
   useEffect(() => {
-    //Make request when parameters change
+    //Make request when parameters change for top-level statistics
     //If region is set to everywhere
     var options = {};
     if (region === "everywhere") {
@@ -182,6 +184,17 @@ export default function CovidStatistics() {
       });
     axios.get();
   }, [region, timespan]);
+
+  useEffect(() => {
+    // Update graph data when region, timespan and data type change
+    // if region is set to everywhere
+    var url = "";
+    var options = {};
+    if (region === "everywhere") {
+    } else {
+      //Specific region is set
+    }
+  }, [dataType, region, timespan]);
   return (
     <>
       <Container maxWidth="md">
@@ -242,16 +255,21 @@ export default function CovidStatistics() {
             </Select>
           </div>
         </div>
-        <TestChart />
+        {/* <TestChart /> */}
         <Chart padding={[10, 20, 50, 40]} autoFit height={300} data={graphData}>
           <LineAdvance
             shape="smooth"
             point
             area
-            position="month*temperature"
-            color="city"
+            position="date*abbrVal"
+            color="orange"
           />
         </Chart>
+        <center>
+          <i>
+            <small className="chart-tip">Figures in million</small>
+          </i>
+        </center>
       </Container>
     </>
   );
