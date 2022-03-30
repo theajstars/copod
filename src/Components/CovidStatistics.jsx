@@ -8,8 +8,13 @@ import Globe from "../Assets/IMG/world-globe.png";
 import TestChart from "./TestChart";
 import { Chart, LineAdvance } from "bizcharts";
 
-function handleRegionChange(optionValue) {
-  console.log("Value changed to: ", optionValue);
+function getRealDate(date) {
+  var d = new Date(date);
+  var year = d.getFullYear();
+  var month = d.getMonth() + 1;
+  month = month < 10 ? `0${month}` : month;
+  var date = d.getDate();
+  return `${year}-${month}-${date}`;
 }
 function handleDataChange(optionValue) {
   console.log("Value changed to: ", optionValue);
@@ -26,12 +31,41 @@ export default function CovidStatistics() {
   const [activeCases, setActiveCases] = useState(0);
   const [newCases, setNewCases] = useState(0);
   const [deaths, setDeaths] = useState(0);
+  var d = new Date();
+  var year = d.getFullYear();
+  var month = d.getMonth() + 1;
+  var date = d.getDate() - 1;
+  const currentDateString = `${year}-${month < 10 ? `0${month}` : `${month}`}-${
+    date < 10 ? `0${date}` : `${date}`
+  }`;
+  // Set the default timespan to the currentDateString
+  const [timespan, setTimespan] = useState(currentDateString);
   useEffect(() => {
     console.log("The graph data: ", graphData);
   }, [graphData]);
   function handleTimeSpanChange(optionValue) {
+    setTimespan(optionValue);
     // console.log("Value changed to: ", optionValue);
-    switch (optionValue) {
+  }
+  function handleRegionChange(optionValue) {
+    console.log("Value changed to: ", optionValue);
+    setRegion(optionValue);
+  }
+
+  useEffect(() => {
+    //Get countries and flags on page load
+    document.title = "COPOD - COVID Tracker";
+    axios
+      .get(
+        `https://cdn.jsdelivr.net/npm/country-flag-emoji-json@2.0.0/dist/index.json`
+      )
+      .then((res) => {
+        setCountries(res.data);
+      });
+  }, []);
+
+  function updateGraph() {
+    switch (timespan) {
       case "two-weeks":
         var today = new Date();
         //Get array of all dates two weeks before current date
@@ -113,39 +147,122 @@ export default function CovidStatistics() {
         console.log("Default value");
     }
   }
-  var d = new Date();
-  var year = d.getFullYear();
-  var month = d.getMonth() + 1;
-  var date = d.getDate() - 1;
-  const currentDateString = `${year}-${month < 10 ? `0${month}` : `${month}`}-${
-    date < 10 ? `0${date}` : `${date}`
-  }`;
-  // Set the default timespan to the currentDateString
-  const [timespan, setTimespan] = useState(currentDateString);
+  function updateStatistics() {
+    var today = new Date(new Date().setDate(new Date().getDate() - 1));
 
-  useEffect(() => {
-    //Get countries and flags on page load
-    document.title = "COPOD - COVID Tracker";
-    console.log("The current Date:", timespan);
-    axios
-      .get(
-        `https://cdn.jsdelivr.net/npm/country-flag-emoji-json@2.0.0/dist/index.json`
-      )
-      .then((res) => {
-        setCountries(res.data);
-      });
-  }, []);
+    const todayDateString = getRealDate(today);
+    var dateString = "";
+    var apiURL = "";
 
-  useEffect(() => {
-    //Make request when parameters change for top-level statistics
-    //If region is set to everywhere
-    var options = {};
+    //Modify date string based on timespan
     if (region === "everywhere") {
-      options = {
+      if (timespan === "today") {
+        //Make one API request
+      } else {
+        switch (timespan) {
+          case "two-weeks":
+            var todayStats = {};
+            var twoWeeksStats = {};
+            //Make two requests for today and date two weeks ago
+            const twoWeeksAgo = getRealDate(
+              new Date(new Date().setDate(new Date().getDate() - 14))
+            );
+            var todayOptions = {
+              method: "GET",
+              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+              params: {
+                date: todayDateString,
+              },
+              headers: {
+                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+                "X-RapidAPI-Key":
+                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+              },
+            };
+            var twoWeeksOptions = {
+              method: "GET",
+              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+              params: {
+                date: twoWeeksAgo,
+              },
+              headers: {
+                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+                "X-RapidAPI-Key":
+                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+              },
+            };
+            //Get today Statistics
+            axios.request(todayOptions).then((res) => {
+              todayStats = res.data.data;
+              console.log(todayStats);
+            });
+            axios.request(twoWeeksOptions).then((res) => {
+              twoWeeksStats = res.data.data;
+              console.clear();
+              console.log(todayStats);
+              console.log(twoWeeksStats);
+              console.log(twoWeeksAgo);
+              //Update statistics Parameters
+              setTimeout(() => {
+                setDeaths(todayStats.deaths - twoWeeksStats.deaths);
+                setActiveCases(twoWeeksStats.active);
+                setNewCases(todayStats.active - twoWeeksStats.active);
+              }, 1500);
+            });
+            break;
+          case "last-30-days":
+            var todayStats = {};
+            var days30Stats = {};
+            //Make two requests for today and date two weeks ago
+            const days30Ago = getRealDate(
+              new Date(new Date().setDate(new Date().getDate() - 30))
+            );
+            var todayOptions = {
+              method: "GET",
+              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+              params: {
+                date: todayDateString,
+              },
+              headers: {
+                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+                "X-RapidAPI-Key":
+                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+              },
+            };
+            var days30Options = {
+              method: "GET",
+              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+              params: {
+                date: days30Ago,
+              },
+              headers: {
+                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+                "X-RapidAPI-Key":
+                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+              },
+            };
+            //Get today Statistics
+            axios.request(todayOptions).then((res) => {
+              todayStats = res.data.data;
+              console.log(todayStats);
+            });
+            axios.request(days30Options).then((res) => {
+              days30Stats = res.data.data;
+              console.clear();
+              //Update statistics Parameters
+              setTimeout(() => {
+                setDeaths(todayStats.deaths - days30Stats.deaths);
+                setActiveCases(days30Stats.active);
+                setNewCases(todayStats.active - days30Stats.active);
+              }, 1500);
+            });
+        }
+      }
+      var options = {
         method: "GET",
         url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
         params: {
-          date: timespan,
+          date: dateString,
         },
         headers: {
           "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
@@ -155,7 +272,7 @@ export default function CovidStatistics() {
       };
     } else {
       //Region is set to a particular country
-      options = {
+      var options = {
         method: "GET",
         url: "https://covid-19-statistics.p.rapidapi.com/reports/",
         params: {
@@ -182,19 +299,18 @@ export default function CovidStatistics() {
       .catch((err) => {
         console.error(err);
       });
-    axios.get();
+  }
+  useEffect(() => {
+    //Make request when parameters change for top-level statistics
+    //If region is set to everywhere
+    updateStatistics();
   }, [region, timespan]);
 
-  useEffect(() => {
-    // Update graph data when region, timespan and data type change
-    // if region is set to everywhere
-    var url = "";
-    var options = {};
-    if (region === "everywhere") {
-    } else {
-      //Specific region is set
-    }
-  }, [dataType, region, timespan]);
+  // useEffect(() => {
+  //   // Update graph data when region, timespan and data type change
+  //   // if region is set to everywhere
+  //   updateGraph();
+  // }, [dataType, region, timespan]);
   return (
     <>
       <Container maxWidth="md">
@@ -256,7 +372,7 @@ export default function CovidStatistics() {
           </div>
         </div>
         {/* <TestChart /> */}
-        <Chart padding={[10, 20, 50, 40]} autoFit height={300} data={graphData}>
+        {/* <Chart padding={[10, 20, 50, 40]} autoFit height={300} data={graphData}>
           <LineAdvance
             shape="smooth"
             point
@@ -264,7 +380,7 @@ export default function CovidStatistics() {
             position="date*abbrVal"
             color="orange"
           />
-        </Chart>
+        </Chart> */}
         <center>
           <i>
             <small className="chart-tip">Figures in million</small>
