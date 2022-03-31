@@ -14,6 +14,7 @@ function getRealDate(date) {
   var month = d.getMonth() + 1;
   month = month < 10 ? `0${month}` : month;
   var date = d.getDate();
+  date = date < 10 ? `0${date}` : date;
   return `${year}-${month}-${date}`;
 }
 function handleDataChange(optionValue) {
@@ -44,8 +45,8 @@ export default function CovidStatistics() {
     console.log("The graph data: ", graphData);
   }, [graphData]);
   function handleTimeSpanChange(optionValue) {
+    console.log(optionValue);
     setTimespan(optionValue);
-    // console.log("Value changed to: ", optionValue);
   }
   function handleRegionChange(optionValue) {
     console.log("Value changed to: ", optionValue);
@@ -151,8 +152,6 @@ export default function CovidStatistics() {
     var today = new Date(new Date().setDate(new Date().getDate() - 1));
 
     const todayDateString = getRealDate(today);
-    var dateString = "";
-    var apiURL = "";
 
     //Modify date string based on timespan
     if (region === "everywhere") {
@@ -160,6 +159,28 @@ export default function CovidStatistics() {
         //Make one API request
       } else {
         switch (timespan) {
+          case "this-day":
+            console.clear();
+            console.log(todayDateString);
+            var todayOptions = {
+              method: "GET",
+              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+              params: {
+                date: todayDateString,
+              },
+              headers: {
+                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+                "X-RapidAPI-Key":
+                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+              },
+            };
+            axios.request(todayOptions).then((res) => {
+              console.log(res);
+              setDeaths(res.data.data.deaths);
+              setActiveCases(res.data.data.active);
+              setNewCases(res.data.data.active_diff);
+            });
+            break;
           case "two-weeks":
             var todayStats = {};
             var twoWeeksStats = {};
@@ -198,7 +219,7 @@ export default function CovidStatistics() {
             });
             axios.request(twoWeeksOptions).then((res) => {
               twoWeeksStats = res.data.data;
-              console.clear();
+              // console.clear();
               console.log(todayStats);
               console.log(twoWeeksStats);
               console.log(twoWeeksAgo);
@@ -241,6 +262,7 @@ export default function CovidStatistics() {
                   "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
               },
             };
+            console.log(days30Ago);
             //Get today Statistics
             axios.request(todayOptions).then((res) => {
               todayStats = res.data.data;
@@ -248,28 +270,19 @@ export default function CovidStatistics() {
             });
             axios.request(days30Options).then((res) => {
               days30Stats = res.data.data;
-              console.clear();
+              console.log(days30Stats);
+              // console.clear();
               //Update statistics Parameters
               setTimeout(() => {
+                console.log("Perfomed some action");
                 setDeaths(todayStats.deaths - days30Stats.deaths);
                 setActiveCases(days30Stats.active);
                 setNewCases(todayStats.active - days30Stats.active);
               }, 1500);
             });
+            break;
         }
       }
-      var options = {
-        method: "GET",
-        url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
-        params: {
-          date: dateString,
-        },
-        headers: {
-          "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
-          "X-RapidAPI-Key":
-            "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
-        },
-      };
     } else {
       //Region is set to a particular country
       var options = {
@@ -304,6 +317,7 @@ export default function CovidStatistics() {
     //Make request when parameters change for top-level statistics
     //If region is set to everywhere
     updateStatistics();
+    console.log(timespan);
   }, [region, timespan]);
 
   // useEffect(() => {
@@ -342,6 +356,12 @@ export default function CovidStatistics() {
 
             <Select
               defaultValue="everywhere"
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children[1].toLowerCase().indexOf(input.toLowerCase()) >=
+                0
+              }
               style={{ width: 250 }}
               onChange={handleRegionChange}
             >
@@ -364,10 +384,10 @@ export default function CovidStatistics() {
               style={{ width: 140 }}
               onChange={handleTimeSpanChange}
             >
+              <Option value="this-day">Today</Option>
               <Option value="all-time">All Time</Option>
               <Option value="last-30-days">Last 30 Days</Option>
               <Option value="two-weeks">Last 2 Weeks</Option>
-              <Option value="today">Today</Option>
             </Select>
           </div>
         </div>
