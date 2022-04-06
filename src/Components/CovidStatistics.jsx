@@ -155,7 +155,7 @@ export default function CovidStatistics() {
 
     //Modify date string based on timespan
     if (region === "everywhere") {
-      if (timespan === "today") {
+      if (timespan === "this-day") {
         //Make one API request
       } else {
         switch (timespan) {
@@ -380,12 +380,11 @@ export default function CovidStatistics() {
             </Select>
 
             <Select
-              defaultValue="all-time"
+              defaultValue="this-day"
               style={{ width: 140 }}
               onChange={handleTimeSpanChange}
             >
               <Option value="this-day">Today</Option>
-              <Option value="all-time">All Time</Option>
               <Option value="last-30-days">Last 30 Days</Option>
               <Option value="two-weeks">Last 2 Weeks</Option>
             </Select>
