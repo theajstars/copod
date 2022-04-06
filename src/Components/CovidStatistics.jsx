@@ -157,30 +157,28 @@ export default function CovidStatistics() {
     if (region === "everywhere") {
       if (timespan === "this-day") {
         //Make one API request
+        console.clear();
+        console.log(todayDateString);
+        var todayOptions = {
+          method: "GET",
+          url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+          params: {
+            date: todayDateString,
+          },
+          headers: {
+            "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+            "X-RapidAPI-Key":
+              "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+          },
+        };
+        axios.request(todayOptions).then((res) => {
+          console.log(res);
+          setDeaths(res.data.data.deaths);
+          setActiveCases(res.data.data.active);
+          setNewCases(res.data.data.active_diff);
+        });
       } else {
         switch (timespan) {
-          case "this-day":
-            console.clear();
-            console.log(todayDateString);
-            var todayOptions = {
-              method: "GET",
-              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
-              params: {
-                date: todayDateString,
-              },
-              headers: {
-                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
-                "X-RapidAPI-Key":
-                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
-              },
-            };
-            axios.request(todayOptions).then((res) => {
-              console.log(res);
-              setDeaths(res.data.data.deaths);
-              setActiveCases(res.data.data.active);
-              setNewCases(res.data.data.active_diff);
-            });
-            break;
           case "two-weeks":
             var todayStats = {};
             var twoWeeksStats = {};
@@ -285,113 +283,227 @@ export default function CovidStatistics() {
       }
     } else {
       //Region is set to a particular country
-      var options = {
-        method: "GET",
-        url: "https://covid-19-statistics.p.rapidapi.com/reports/",
-        params: {
-          region_name: region,
-          date: timespan,
-        },
-        headers: {
-          "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
-          "X-RapidAPI-Key":
-            "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
-        },
-      };
+      if (timespan === "this-day") {
+        //Make one API request
+        console.clear();
+        console.log(todayDateString);
+        var todayOptions = {
+          method: "GET",
+          url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+          params: {
+            date: todayDateString,
+          },
+          headers: {
+            "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+            "X-RapidAPI-Key":
+              "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+          },
+        };
+        axios.request(todayOptions).then((res) => {
+          console.log(res);
+          setDeaths(res.data.data.deaths);
+          setActiveCases(res.data.data.active);
+          setNewCases(res.data.data.active_diff);
+        });
+      } else {
+        switch (timespan) {
+          case "two-weeks":
+            var todayStats = {};
+            var twoWeeksStats = {};
+            //Make two requests for today and date two weeks ago
+            const twoWeeksAgo = getRealDate(
+              new Date(new Date().setDate(new Date().getDate() - 14))
+            );
+            var todayOptions = {
+              method: "GET",
+              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+              params: {
+                date: todayDateString,
+              },
+              headers: {
+                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+                "X-RapidAPI-Key":
+                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+              },
+            };
+            var twoWeeksOptions = {
+              method: "GET",
+              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+              params: {
+                date: twoWeeksAgo,
+              },
+              headers: {
+                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+                "X-RapidAPI-Key":
+                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+              },
+            };
+            //Get today Statistics
+            axios.request(todayOptions).then((res) => {
+              todayStats = res.data.data;
+              console.log(todayStats);
+            });
+            axios.request(twoWeeksOptions).then((res) => {
+              twoWeeksStats = res.data.data;
+              // console.clear();
+              console.log(todayStats);
+              console.log(twoWeeksStats);
+              console.log(twoWeeksAgo);
+              //Update statistics Parameters
+              setTimeout(() => {
+                setDeaths(todayStats.deaths - twoWeeksStats.deaths);
+                setActiveCases(twoWeeksStats.active);
+                setNewCases(todayStats.active - twoWeeksStats.active);
+              }, 1500);
+            });
+            break;
+          case "last-30-days":
+            var todayStats = {};
+            var days30Stats = {};
+            //Make two requests for today and date two weeks ago
+            const days30Ago = getRealDate(
+              new Date(new Date().setDate(new Date().getDate() - 30))
+            );
+            var todayOptions = {
+              method: "GET",
+              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+              params: {
+                date: todayDateString,
+              },
+              headers: {
+                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+                "X-RapidAPI-Key":
+                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+              },
+            };
+            var days30Options = {
+              method: "GET",
+              url: "https://covid-19-statistics.p.rapidapi.com/reports/total",
+              params: {
+                date: days30Ago,
+              },
+              headers: {
+                "X-RapidAPI-Host": "covid-19-statistics.p.rapidapi.com",
+                "X-RapidAPI-Key":
+                  "c25b202a81msh193143b5a7aefe3p11a9a3jsn7785bbb7b0fd",
+              },
+            };
+            console.log(days30Ago);
+            //Get today Statistics
+            axios.request(todayOptions).then((res) => {
+              todayStats = res.data.data;
+              console.log(todayStats);
+            });
+            axios.request(days30Options).then((res) => {
+              days30Stats = res.data.data;
+              console.log(days30Stats);
+              // console.clear();
+              //Update statistics Parameters
+              setTimeout(() => {
+                console.log("Perfomed some action");
+                setDeaths(todayStats.deaths - days30Stats.deaths);
+                setActiveCases(days30Stats.active);
+                setNewCases(todayStats.active - days30Stats.active);
+              }, 1500);
+            });
+            break;
+        }
+      }
+
+      axios
+        .request(options)
+        .then((response) => {
+          console.log(response.data);
+          const data = response.data.data;
+          setActiveCases(data.active);
+          setNewCases(data.active_diff);
+          setDeaths(data.deaths);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     }
+    useEffect(() => {
+      //Make request when parameters change for top-level statistics
+      //If region is set to everywhere
+      updateStatistics();
+    }, [region, timespan]);
 
-    axios
-      .request(options)
-      .then((response) => {
-        console.log(response.data);
-        const data = response.data.data;
-        setActiveCases(data.active);
-        setNewCases(data.active_diff);
-        setDeaths(data.deaths);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  }
-  useEffect(() => {
-    //Make request when parameters change for top-level statistics
-    //If region is set to everywhere
-    updateStatistics();
-    console.log(timespan);
-  }, [region, timespan]);
+    // useEffect(() => {
+    //   // Update graph data when region, timespan and data type change
+    //   // if region is set to everywhere
+    //   updateGraph();
+    // }, [dataType, region, timespan]);
+    return (
+      <>
+        <Container maxWidth="md">
+          <div className="statistics-container flex-column">
+            <div className="flex-row stats-row">
+              <div className="stat-item">
+                <div className="stat-figure">
+                  {activeCases.toLocaleString()}
+                </div>
+                <small className="stat-name">Active Cases</small>
+              </div>
+              <div className="stat-item">
+                <div className="stat-figure">{newCases.toLocaleString()}</div>
+                <small className="stat-name">New Cases</small>
+              </div>
+              <div className="stat-item">
+                <div className="stat-figure">{deaths.toLocaleString()}</div>
+                <small className="stat-name">Total Deaths</small>
+              </div>
+            </div>
+            <div className="flex-row statistics-select">
+              <Select
+                defaultValue="new-cases"
+                style={{ width: 140 }}
+                onChange={handleDataChange}
+              >
+                <Option value="total-cases">Total Cases</Option>
+                <Option value="new-cases">New Cases</Option>
+                <Option value="deaths">Deaths</Option>
+              </Select>
 
-  // useEffect(() => {
-  //   // Update graph data when region, timespan and data type change
-  //   // if region is set to everywhere
-  //   updateGraph();
-  // }, [dataType, region, timespan]);
-  return (
-    <>
-      <Container maxWidth="md">
-        <div className="statistics-container flex-column">
-          <div className="flex-row stats-row">
-            <div className="stat-item">
-              <div className="stat-figure">{activeCases.toLocaleString()}</div>
-              <small className="stat-name">Active Cases</small>
-            </div>
-            <div className="stat-item">
-              <div className="stat-figure">{newCases.toLocaleString()}</div>
-              <small className="stat-name">New Cases</small>
-            </div>
-            <div className="stat-item">
-              <div className="stat-figure">{deaths.toLocaleString()}</div>
-              <small className="stat-name">Total Deaths</small>
+              <Select
+                defaultValue="everywhere"
+                showSearch
+                optionFilterProp="children"
+                filterOption={(input, option) =>
+                  option.children[1]
+                    .toLowerCase()
+                    .indexOf(input.toLowerCase()) >= 0
+                }
+                style={{ width: 250 }}
+                onChange={handleRegionChange}
+              >
+                <Option value="everywhere">{globePrefix} Everywhere</Option>
+                {countries.map((country, countryIndex) => {
+                  const countryPrefix = (
+                    <img src={country.image} className="country-select-image" />
+                  );
+                  return (
+                    <Option value={country.code} key={`meow${countryIndex}`}>
+                      {countryPrefix}
+                      {country.name}
+                    </Option>
+                  );
+                })}
+              </Select>
+
+              <Select
+                defaultValue="this-day"
+                style={{ width: 140 }}
+                onChange={handleTimeSpanChange}
+              >
+                <Option value="this-day">Today</Option>
+                <Option value="last-30-days">Last 30 Days</Option>
+                <Option value="two-weeks">Last 2 Weeks</Option>
+              </Select>
             </div>
           </div>
-          <div className="flex-row statistics-select">
-            <Select
-              defaultValue="new-cases"
-              style={{ width: 140 }}
-              onChange={handleDataChange}
-            >
-              <Option value="total-cases">Total Cases</Option>
-              <Option value="new-cases">New Cases</Option>
-              <Option value="deaths">Deaths</Option>
-            </Select>
-
-            <Select
-              defaultValue="everywhere"
-              showSearch
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                option.children[1].toLowerCase().indexOf(input.toLowerCase()) >=
-                0
-              }
-              style={{ width: 250 }}
-              onChange={handleRegionChange}
-            >
-              <Option value="everywhere">{globePrefix} Everywhere</Option>
-              {countries.map((country, countryIndex) => {
-                const countryPrefix = (
-                  <img src={country.image} className="country-select-image" />
-                );
-                return (
-                  <Option value={country.code} key={`meow${countryIndex}`}>
-                    {countryPrefix}
-                    {country.name}
-                  </Option>
-                );
-              })}
-            </Select>
-
-            <Select
-              defaultValue="this-day"
-              style={{ width: 140 }}
-              onChange={handleTimeSpanChange}
-            >
-              <Option value="this-day">Today</Option>
-              <Option value="last-30-days">Last 30 Days</Option>
-              <Option value="two-weeks">Last 2 Weeks</Option>
-            </Select>
-          </div>
-        </div>
-        {/* <TestChart /> */}
-        {/* <Chart padding={[10, 20, 50, 40]} autoFit height={300} data={graphData}>
+          {/* <TestChart /> */}
+          {/* <Chart padding={[10, 20, 50, 40]} autoFit height={300} data={graphData}>
           <LineAdvance
             shape="smooth"
             point
@@ -400,12 +512,13 @@ export default function CovidStatistics() {
             color="orange"
           />
         </Chart> */}
-        <center>
-          <i>
-            <small className="chart-tip">Figures in million</small>
-          </i>
-        </center>
-      </Container>
-    </>
-  );
+          <center>
+            <i>
+              <small className="chart-tip">Figures in million</small>
+            </i>
+          </center>
+        </Container>
+      </>
+    );
+  }
 }
